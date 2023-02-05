@@ -3,8 +3,26 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-        <title>Babylon.js sample code</title>
-
+        <title>URDF_Wizard</title>
+        <input type="hidden" id="email_data" value="{{component_profile}}">
+        <input type="hidden" id="projectname" value="{{Project_name}}">
+        <input type="hidden" id="component_select" value="{{Component_selected}}">
+        <input type="hidden" id="Filenametd" value="{{filenametd}}">
+        <input type="hidden" id="proj_dir">
+        <input type="hidden" id="mass">
+        <input type="hidden" id="color_hex">
+        <input type="hidden" id="colors_data">
+        <input type="hidden" id="component_name">
+        <input type="hidden" id="geometry">
+        <input type="hidden" id="rpy_link"> <!--row pitch yaw data --> 
+        <input type="hidden" id="inertial_min_data">
+        <input type="hidden" id="inertial_max_data">
+        <input type="hidden" id="ixx_dat">
+        <input type="hidden" id="ixy_dat">
+        <input type="hidden" id="iyy_dat">
+        <input type="hidden" id="iyz_dat">
+        <input type="hidden" id="izz_dat">
+        
         <!-- Babylon.js -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
         <script src="https://assets.babylonjs.com/generated/Assets.js"></script>
@@ -20,8 +38,7 @@
         <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
         <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
         <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js" type="text/javascript"></script>
- 
+
         <style>
             html, body {
                 overflow: hidden;
@@ -38,7 +55,7 @@
             }
             A, A:link, A:visited, A:active {
     text-decoration:none;
-    color:#898989; )
+    color:#898989;
 }
 A:hover { color:#fff;}
 
@@ -64,9 +81,11 @@ A:hover { color:#fff;}
   position:relative;
   
 }
-
-
-
+#gui { 
+  position: absolute; 
+  top:  15px; 
+  left: 0px 
+}
 #content 
 {
   margin-left: 20px;
@@ -102,90 +121,133 @@ A:hover { color:#fff;}
    color: #444;
 }
         </style>
-    </head>
+<style>
+    body {font-family: Arial, Helvetica, sans-serif;}
     
+    /* The Modal (background) */
+    .modal {
+      display: none; /* Hidden by default */
+      position: fixed; /* Stay in place */
+      z-index: 1; /* Sit on top */
+      padding-top: 100px; /* Location of the box */
+      left: 0;
+      top: 0;
+      width: 100%; /* Full width */
+      height: 100%; /* Full height */
+      overflow: auto; /* Enable scroll if needed */
+      background-color: rgb(0,0,0); /* Fallback color */
+      background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+    
+    /* Modal Content */
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+    }
+    
+    /* The Close Button */
+    .close {
+      color: #aaaaaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    
+    .close:hover,
+    .close:focus {
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    /* Style the tab */
+    .tab {
+      overflow: hidden;
+      border: 1px solid #ccc;
+      background-color: #f1f1f1;
+    }
+    
+    /* Style the buttons inside the tab */
+    .tab button {
+      background-color: inherit;
+      float: left;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      transition: 0.3s;
+      font-size: 17px;
+    }
+    
+    /* Change background color of buttons on hover */
+    .tab button:hover {
+      background-color: #ddd;
+    }
+    
+    /* Create an active/current tablink class */
+    .tab button.active {
+      background-color: #ccc;
+    }
+    
+    /* Style the tab content */
+    .tabcontent {
+      display: none;
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      border-top: none;
+    }
+    </style>
+    </head>
 <body>
+    <div id="myModal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+          <!--<span class="close">&times;</span>-->
+          <div class="tab">
+          <button class="tablinks" onclick="uploadfile(event, 'upload_file')">Upload 3D model file</button>
+
+          </div>
+          
+          <div id="upload_file" class="tabcontent">
+            <p>Upload package of 3d model in file .zip </p>
+            <form method='POST' enctype='multipart/form-data'>
+                {{form.hidden_tag()}}
+                {{form.file()}}
+                {{form.submit()}}
+            </form>
+           
+          </div>
+          
+        </div>
+      </div>
+      <div id="mi-modal" class="modal">
+        <div class="modal-dialog modal-sm">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title" id="myModalLabel">Are you sure you want to delete this component from project?</h4>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" id="modal-btn-si">Yes</button>
+              <button type="button" class="btn btn-primary" id="modal-btn-no">No</button>
+            </div>
+          </div>
+        </div>
+    </div> 
+    <div id="position_data"></div>  <!---->
+    <div id="rotation_data"></div>
+    <div id="scale_data"></div>
+    <div id="model_stl"></div>
     <canvas id="renderCanvas"></canvas>
+    
     <script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
     <script>
-        var settings = {
-  message: "dat.GUI",
-  checkbox: true,
-  colorA: '#FF00B4', 
-  colorB: '#22CBFF', 
-  step5: 10,
-  range: 50,
-  options:"Option 1",
-  speed:0,
-  func: function() 
-  { 
-      console.log(this.range);
-  },
-  justgooddesign: function() 
-  {  
-    window.location = "https://www.justgooddesign.com";
-  },
-  field1: "Field 1",
-  field2: "Field 2",
-  color0: "#ffae23", // CSS string
-  color1: [ 0, 128, 255 ], // RGB array
-  color2: [ 0, 128, 255, 0.3 ], // RGB with alpha
-  color3: { h: 350, s: 0.9, v: 0.3 } // Hue, saturation, value
-};
-
-
-var gui = new dat.GUI({autoPlace: false}); 
-document.querySelector("body").appendChild(gui.domElement);
-gui.domElement.style.position = "fixed";
-gui.domElement.style.left = "0";
-gui.domElement.style.top = "0";
-gui.add(settings, 'message').onChange(function (value) {
-
-});  
-gui.add(settings, 'step5', 0, 255).step(5); 
-gui.add(settings, 'checkbox').onChange(function (value) {
-
-}); 
-gui.add(settings, 'range', 1, 100).onChange(function (value) {
-
-});
-gui.add(settings, 'options', [ 'Option 1', 'Option 2', 'Option 3' ] );
-gui.add(settings, 'speed', { Low: 0, Med: 0.5, High: 1 } );
-gui.addColor(settings, 'colorA').onChange(function (value) {
-
-});
-gui.addColor(settings, 'colorB').onChange(function (value) {
-
-});
-gui.add(settings, 'func');
-gui.open();
-
-var f1 = gui.addFolder('Fields');
-f1.add(settings, 'field1');
-f1.add(settings, 'field2');
-f1.close();
-
-var f2 = gui.addFolder('Colors');
-f2.addColor(settings, 'color0');
-f2.addColor(settings, 'color1');
-f2.addColor(settings, 'color2');
-f2.addColor(settings, 'color3');
-f2.close();
-
-var f3 = gui.addFolder('Just Good Design'); 
-f3.add(settings, 'justgooddesign');
-f3.close();
-
-// update display outside of gui
-// http://workshop.chromeexperiments.com/examples/gui/#10--Updating-the-Display-Manually
-
-
-
-
-
-
+        //Running the first view of the model loader 
+        //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         var canvas = document.getElementById("renderCanvas");
-
+        
         var startRenderLoop = function (engine, canvas) {
             engine.runRenderLoop(function () {
                 if (sceneToRender && sceneToRender.activeCamera) {
@@ -193,83 +255,44 @@ f3.close();
                 }
             });
         }
-
-        var engine = null;
-        var scene = null;
-        var sceneToRender = null;
-        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
         
-class CustomNode extends BABYLON.TransformNode {
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        var createScene = function () {
+            var scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color3(0.8,0.8,0.8);
+            //Adding a light
+            var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(10, 10, 10), scene);
+        
+            var groundMat = new BABYLON.PBRMaterial("groundMat", scene);
+            groundMat.albedoColor  = new BABYLON.Color4(10, 10, 10, 1);
+            groundMat.metallic = 0;
+            groundMat.roughness = 0.4;
+            groundMat.environmentIntensity = 0;
+            
+            
+            //Adding an Arc Rotate Camera
+            var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0, -10, BABYLON.Vector3(0,0,-10), scene);
+            camera.attachControl(scene.getEngine().getRenderingCanvas());
+            camera.zoomToMouseLocation = true; 
+            camera.wheelDeltaPercentage = 0.05;
+            camera.inputs.addMouseWheel();
+            //camera.setTarget(BABYLON.Vector3.Zero()); 
+            camera.attachControl(canvas);
+            
+            // The first parameter can be used to specify which mesh to import. Here we import all meshes
+           // BABYLON.SceneLoader.ImportMesh("", "/static/", "Mechanum_upgrade_edited.gltf", scene, function (newMeshes) {
+                // Set the target of the camera to the first imported mesh
+           //     camera.target = newMeshes[0];
 
-    _mesh;
-    _color;
-
-    constructor(name, scene, color) {
-        super(name, scene);
-
-        this._mesh = BABYLON.MeshBuilder.CreateBox("box", { size: 2 }, scene);
-        this._mesh.parent = this;
-        this._mesh.material = new BABYLON.StandardMaterial("material", scene);
-
-        // Set initial color.
-        this.color = color;
-
-        // Custom inspector properties.
-        this.inspectableCustomProperties = [
-            {
-                label: "My color field",
-                propertyName: "color",
-                type: BABYLON.InspectableType.Color3
-            }
-        ];
-    }
-
-    set color(value) {
-        this._color = value;
-        this._mesh.material.diffuseColor = value;
-    }
-
-    get color() {
-        return this._color;
-    }
-}
-
-var createScene = function () {
-
-    // This creates a basic Babylon Scene object (non-mesh)
-    var scene = new BABYLON.Scene(engine);
-     
-    // This creates and positions a free camera (non-mesh)
-    var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 5, -7), scene);
-
-    // This targets the camera to scene origin
-    camera.setTarget(BABYLON.Vector3.Zero());
-
-    // This attaches the camera to the canvas
-    camera.attachControl(canvas, true);
-
-    // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-    var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-
-    // Default intensity is 1. Let's dim the light a small amount
-    light.intensity = 0.7;
-
-    // Instantiate custom nodes.
-    const myCustomNode1 = new CustomNode("myCustomNode1", scene, BABYLON.Color3.Green());
-    myCustomNode1.position.x = -1.5;
-    const myCustomNode2 = new CustomNode("myCustomNode2", scene, BABYLON.Color3.Red());
-    myCustomNode2.position.x = 1.5;
-
-    // Show inspector.
-    //scene.debugLayer.inspector.setDocked(true);
-  
-    scene.debugLayer.show({
-        embedMode: true,
-    });
-
-    //scene.debugLayer.setDocked(true);
-    return scene;
-};
+           // });
+        
+            // Move the light with the camera
+            scene.registerBeforeRender(function () {
+                light.position = camera.position;
+            });
+            scene.useRightHandedSystem = true;  
+            return scene;
+        }
                 window.initFunction = async function() {
                     
                     
@@ -293,8 +316,1156 @@ var createScene = function () {
         window.addEventListener("resize", function () {
             engine.resize();
         });
+        </script>
+        
+        <script>
+        //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        account_payload = document.getElementById('email_data').value
+        console.log(account_payload);
+        json_data = JSON.parse(atob(account_payload))
+        console.log(json_data);
+        email_data = json_data['email']
+        project_name = json_data['project_name']  
+        file_name_data = document.getElementById("Filenametd").value  
+        var mesh_data_id = {};  
+        var urdf_data = {}; 
+        var urdf_parts = {};
+        var project_package = {}; 
+        var package_urdf = {}; 
+        var current_mesh = []; 
+        var picked_data = {}; 
+        var inertia_data = {};  
+        var pos_data = []; 
+        var verify_joint_link = {}; // Verify joint or link data of the part selected in the components in dat gui 
+        var existing_stl = []; //check the stl data of the existing the 
+        var inertial_origin_xyz = {} //Get all those value in the xyz for the inertial value input
+        var axis_in_joint_limit = {} //Get the joint limit axis 
+        var rpy_inertial_link = {} //Get the link inertial rpy
+        var name_PCj = {} // Get the name of the joint and the parent an child joint data 
+        var current_type_joint = {} // Get the current joint data 
+        var Joint_now = {} // Get all joint now in current data  var current_type_joint = {} // Get the current joint data 
+        var joint_limit_existing = [] // Get the limit joint check existing
+        var joint_sim_default = 0; 
+        var joint_total = {};  // Get the joint all information data 
+        var joint_urdf = {};
+        var link_joint_urdf = {};  
+        var directory_proj = {}; //get the directory project contain 
+        // Preset value in the json form 
+        var Componentsfunction = function(){
+                         this.functionapp = '';  // Get the function from the app to list the application functoin setting in the parts 
+                         this.messages =''; // Name the part 
+                         this.positioninput = '';  // Position input from the model 
+                         this.microdata = ''; // Get the microcontroller data 
+                         this.ic = ''; // Get the ic data from the list request ajax 
+                         this.materials = ''; // Get the materials data request ajax with the property in the json 
+                         this.Imagesensor = ''; // Get the image sensor data request ajax 
+                         //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                         //Main components system 
+                         this.Vision_system = '';
+                         this.Audio_system = '';
+                         this.Motion_system = '';
+                         this.Navigation_system = ''; 
+                         this.Sensor_array_to_image_system = ''; 
+                         this.Single_Board_computer ='';
+                         this.delete_parts = 'Non-select'; 
+                         //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                         //Subsystem function of the category 
+                         this.motion_driver_board = '';
+                         //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                         this.Acousticsense  = ''; // Get the acoustic sensor list 
+                         this.AcousticAmp = ''; // Get the Acoustic amplifier ic data in the list request from ajax 
+                         this.Sensearray = ''; //Get the sensers arraya request ajax data 
+                         this.Sensorpartsdata = ''; // Get the sensers array data for diferent type of the sensor 
+                         this.SenseSpec = ''; // Getting the sensor specification and communication function 
+                         this.SenseCommunic = ''; //Getting the sensor communications pins out 
+                         this.Computeronboard  = ''; //Get the computer on-board list from the ajax 
+                         this.Navigationsense = ''; //Get the Navigation sensor data list from ajax 
+                         this.CellularLTEmod = ''; //Get the celllular LTE module from the list ajax request
+                         this.Batterylist = '';  //Get the battery list from the ajax request 
+                         this.BMSmod = ''; //Get the batter list from the ajax 
+      
+        }; 
+        var componentsdat = new Componentsfunction();
+        var model_stl_dat = document.querySelector('#model_stl');
+        var component_dat = function(){
+          this.message = ''; 
+        }
+         
+        var settings = {
+        
+        project_name: project_name,    //Getting the project from the project_name by document.getElementById() from the back end data input
+        current_decimal:"",
+        compo_name: "",
+        inertial_min:"",
+        inertial_max:"",
+        inertial_origin_x:0,
+        inertial_origin_y:0,
+        inertial_origin_z:0,  
+        inertial_row:0,
+        inertial_pitch:0,
+        inertial_yaw:0,
+        limit_axis_x:0,    // The parameters are only allow for -1,0,1
+        limit_axis_y:0,
+        limit_axis_z:-1,    
+        limit_upper:0,    // upper limit of joint unit in radians  
+        limit_lower:0,    // lower limit of joint unit in radians 
+        limit_effort:0,   // effort parameters 
+        limit_velocity:0, // velocity unit in m/s 
+        mass:0,   //mass unit in kg 
+        ixx:0,
+        ixy:0,
+        ixz:0,
+        iyy:0,
+        iyz:0,
+        izz:0,
+        link: false,
+        joint:false, 
+        joint_name: "",
+        joint_types:'Non-select',
+        parent_node: "Non-select",
+        child_node: "Non-select", 
+        model_current_list:"Non-select",     // Get model current list dat 
+        position: false,
+        rotation:false,
+        scale:false,
+        bounding:false,
+        grid_set:true,
+        color: '#cf0000',
+        model_properties:function(){
+                 console.log("Colorized model....");
+                 console.log("Current hex color data",document.getElementById("color_hex").value); // Get the new color hex to run 
+                 Colorized_model(email_data,project_name,document.getElementById('proj_dir').value,document.getElementById('geometry').value,urdf_parts,document.getElementById('color_hex').value);
+        },  
+        select_model:"Non-select",
+        Mesh_name:'Non-select',    // Show the part name selected in the list from the picked up inside the list dat 
+
+        Joint_parent_and_child:function(){
+          var joint_name_node = Joint.add(settings,'joint_name').onChange(function(values_joint_name){
+                 console.log("Joint_name",values_joint_name);     
+                 name_PCj['Joint_name'] = values_joint_name;
+                 console.log(name_PCj);  
+        });
+        var link_list_name = Object.keys(urdf_data);  //get the key data of the list inside  link part
+        console.log("current_link_list_name",urdf_data,link_list_name); //Get the current link list name 
+                    
+        try{
+                    var parent_child_nodes = Joint.addFolder("Parent_and_Child_nodes");
+                    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    Joint_type = ['revolute','continuous','prismatic','fixed','floating','planar']
+                    joint_parameter_unit = {'revolute':{'rad/s':[-6.28,6.28]},'continuous':{'rad/s':['non','non']},'prismatic':{'m/s':[-9000.0,9000.0]},'fixed':{'non':['non',false]},'floating':{'rad/s':[-6.28,6.28]},'planar':{'rad/s':[-6.28,6.28]}}
+                    Velocity = {'velocity':{'m/s':[0,9000.0]}}
+                    Effort = {'effort':{'N*m':[0,9000.0]}}  
+                    Joint_type.unshift('Non-select'); // Add non select into the list 
+                    var joint_type = parent_child_nodes.add(settings,'joint_types',Joint_type).name('Joint_type')
+                    joint_type.setValue("Non-select") 
+                    joint_type.onChange(function(values_joint_types){
+                         
+                        console.log("Joint_type",values_joint_types); //parent node data of the current link list data  
+                        
+                        name_PCj['Joint_type'] = values_joint_types;
+                        console.log(name_PCj);   
+                        //Get the joint type data of the current joint setting to configure the type of the visualisation 
+                         // Get the joint limit data 
+                        console.log("Joint_limit_existance",joint_limit_existing);
+                        if(joint_limit_existing.includes(values_joint_types) == false){
+                                     // In the case not equal continuos joint 
+                                     //continuous — a continuous hinge joint that rotates around the axis and has no upper and lower limits.
+                                     //Because continuous joint is wheels  
+                                    // # Data referent boundary and unit is using this list "joint_parameter_unit"
+                                    joint_limit_existing.push(values_joint_types);
+                                    //joint_lim_bound = joint_parameter_unit[values_joint_types][Object.keys(joint_parameter_unit[values_joint_types])[0]]
+                                    //units = Object.keys(joint_parameter_unit[values_joint_types])[0]
+                                    
+                                    console.log("Joint_limit_existance",joint_limit_existing);
+                                    current_type_joint['current_joint_type'] = joint_limit_existing; //Check current joint selection 
+                                    if(values_joint_types != joint_type[1]){       
+                                        //Setting the joint limit data of the revolute joint type
+                                        joint_lim_bound = joint_parameter_unit[values_joint_types][Object.keys(joint_parameter_unit[values_joint_types])[0]]
+                                        units = Object.keys(joint_parameter_unit[values_joint_types])[0]
+                                        lower_bound = joint_lim_bound[0]
+                                        upper_bound = joint_lim_bound[1]
+                                        var revolute_joint_lim = parent_child_nodes.addFolder(values_joint_types+"_"+units);  
+                                        revolute_joint_lim.add(settings,'limit_upper',lower_bound,upper_bound).step(0.001).onChange(function(values_limit_upper){
+                                                         console.log("limit_upper_"+values_joint_types+":",values_limit_upper); 
+                                                         Joint_now["limit_upper_"+values_joint_types] =  values_limit_upper;  //Get the limit upper 
+                                                         console.log(Joint_now); //Get the current data show in the list  
+                                        });
+                                        revolute_joint_lim.add(settings,'limit_lower',lower_bound,upper_bound).step(0.001).onChange(function(values_limit_lower){
+                                                         console.log("limit_lower_"+values_joint_types+":",values_limit_lower);  
+                                                         Joint_now["limit_lower_"+values_joint_types] =  values_limit_lower; //Get the limit lower
+                                                         console.log(Joint_now); //Get the current data show in the list      
+                                       });
+                                       //Velocity = {'velocity':{'m/s':[0,9000.0]}}
+                                       //Effort = {'effort':{'N*m':[0,9000.0]}}
+                                       effort_lim = Effort['effort']['N*m']
+                                       limit_effort_upper = effort_lim[0]
+                                       limit_effort_lower = effort_lim[1]
+                                       velocity_lim = Velocity['velocity']['m/s'] 
+                                       limit_velocity_upper = velocity_lim[0] 
+                                       limit_velocity_lower = velocity_lim[1] 
+                                       revolute_joint_lim.add(settings,'limit_effort',0.0,9000.0).onChange(function(effort_limits){
+                                                              
+                                                           console.log("Effort_limit_"+values_joint_types,effort_limits);  //Get efforce limit
+                                                           Joint_now["Effort_limit_"+values_joint_types] = effort_limits;  
+                                                           console.log(Joint_now);
+
+                                       });
+                                       revolute_joint_lim.add(settings,'limit_velocity',0.0,9000.0).onChange(function(velocity_limits){
+                                                       
+                                                          console.log("Velocity_limit_"+values_joint_types,velocity_limits);  //Get velocity limit
+                                                          Joint_now["Velocity_limit_"+values_joint_types] = velocity_limits;
+                                                          console.log(Joint_now);   
+
+                                       });                                                            
+                                   }
+
+
+                             }  
+                                                    
+                   }); 
+                    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    //Set the origin and the rotation point
+                    
+                    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    link_list_name.unshift('Non-select'); // Add non select into the list 
+                    var parent_joint = parent_child_nodes.add(settings,'parent_node',link_list_name).name('Parent_link')
+                    parent_joint.setValue("Non-select") 
+                    parent_joint.onChange(function(values_parent){
+
+                                 console.log("Parent_node_name",values_parent,link_list_name); //parent node data of the current link list data
+                                 name_PCj['Parent_node'] = values_parent;
+                                 console.log(name_PCj);    
+                    });
+                    link_list_name.unshift('Non-select');  //Add non select into the list  
+                    var child_joint = parent_child_nodes.add(settings,'child_node',link_list_name).name('Child_link')
+                    child_joint.setValue("Non-select");
+                    child_joint.onChange(function(values_child){
+                                 console.log("Child_node_name",values_child,link_list_name); //Getting child joint data current link list data                 
+                                 name_PCj['Child_node'] = values_child; 
+                                 console.log(name_PCj);   
+                    });
+                    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    //Joint axis 
+                    var joint_axis_dat = Joint.addFolder("Joint_axis (-1,0,1)"); 
+                    // axis of x y z of the parameter in settings
+                    list_range = [-1,0,1];
+                    var x_axis_lim = joint_axis_dat.add(settings,'limit_axis_x',-1,1).onChange(function(values_x_axis){
+                                console.log("value_X_axis",values_x_axis); // Get value of the x axis 
+                                if(list_range.includes(values_x_axis) == true){
+                                         console.log(axis_in_joint_limit);
+                                         axis_in_joint_limit['x_axis'] = values_x_axis;
+                                         console.log(axis_in_joint_limit);  
+                                }                   
+                    });  
+                    var y_axis_lim = joint_axis_dat.add(settings,"limit_axis_y",-1,1).onChange(function(values_y_axis){
+                                console.log("value_Y_axis",values_y_axis); 
+                                 
+                                if(list_range.includes(values_y_axis) == true){
+                                        console.log(axis_in_joint_limit); 
+                                        axis_in_joint_limit['y_axis'] = values_y_axis; 
+                                        console.log(axis_in_joint_limit); 
+                                }
+                    });
+                    var z_axis_lim = joint_axis_dat.add(settings,"limit_axis_z",-1,1).onChange(function(values_z_axis){
+                                console.log("value_z_axis",values_z_axis);  
+                                if(list_range.includes(values_z_axis) == true){
+                                        console.log(axis_in_joint_limit);
+                                        axis_in_joint_limit['z_axis'] = values_z_axis;
+                                        console.log(axis_in_joint_limit); 
+                                }                                 
+                    });
+                    Joint.add(settings,"Add_joint").name("Add_joint");
+              
+                }
+                  
+
+        catch{
+             console.log("The parent node and child node select box are already exist!");
+        }
+
+        },
+        Add_joint: function(){
+          
+                  console.log("Add new joint into the list"); // Add new joint into the list URDF 
+                  // data will add into the urdf_parts to combine with the other part but this will be add into the joint part
+                  //var inertial_xp_statement = inertial_origin_xyz.ix == undefined ? 0:inertial_origin_xyz.ix;
+                  //name_PCj data
+                  /* 
+                  {
+                          "Joint_name": "HY1",
+                          "Joint_type": "revolute",
+                          "Parent_node": "Body_1",
+                           "Child_node": "Body_1"
+                  }*/
+                  //name_PCj check default values data into the settings parameters values 
+                  joint_sim_default +=1; // Get the joint sim default number 
+                 
+                  var Joint_name_statement = name_PCj['Joint_name'] == undefined ? "J_"+String(joint_sim_default):name_PCj['Joint_name'];
+                  name_PCj['Joint_name'] = Joint_name_statement;  // only add the name for the joint name statement data 
+                  console.log("Joint name parent and child node data",name_PCj);
+                  //Get the default joint axis when there is undefined of the values inside the axis parameters data 
+                  var Joint_axis_x = axis_in_joint_limit['x_axis'] == undefined ? settings['limit_axis_x']:axis_in_joint_limit['x_axis']; 
+                  var Joint_axis_y = axis_in_joint_limit['y_axis'] == undefined ? settings['limit_axis_y']:axis_in_joint_limit['y_axis']; 
+                  var Joint_axis_z = axis_in_joint_limit['z_axis'] == undefined ? settings['limit_axis_z']:axis_in_joint_limit['z_axis'];  
+                  axis_in_joint_limit['x_axis'] = Joint_axis_x; 
+                  axis_in_joint_limit['y_axis'] = Joint_axis_y; 
+                  axis_in_joint_limit['z_axis'] = Joint_axis_z;
+                  console.log("Axis_configuretion",axis_in_joint_limit);
+                  //Setting the default statement as revolute 
+                  var current_jt_statement = current_type_joint['current_joint_type']  == undefined ? "revolute":name_PCj['Joint_type'];   
+                  current_type_joint['current_joint_type'] = current_jt_statement;  //Adding the current data into the current statement 
+                  if(current_type_joint['current_joint_type'] != undefined){
+                         var joint_upper_statement = Joint_now['limit_upper_'+current_type_joint['current_joint_type']]  == undefined ? 0:Joint_now['limit_upper_'+current_type_joint['current_joint_type']];  
+                         Joint_now['limit_upper_'+current_type_joint['current_joint_type']] = joint_upper_statement; 
+                         var joint_lower_statement = Joint_now['limit_lower_'+current_type_joint['current_joint_type']]  == undefined ? 0:Joint_now['limit_lower_'+current_type_joint['current_joint_type']];  
+                         Joint_now['limit_lower_'+current_type_joint['current_joint_type']] = joint_lower_statement; 
+                         var joint_effort_statement = Joint_now['Effort_limit_'+current_type_joint['current_joint_type']] == undefined ? settings['limit_effort']:Joint_now['Effort_limit_'+current_type_joint['current_joint_type']]; 
+                         Joint_now['Effort_limit_'+current_type_joint['current_joint_type']] == joint_effort_statement;
+                         var joint_velocity_statement = Joint_now['Velocity_limit'+current_type_joint['current_joint_type']] == undefined ? settings['limit_velocity']:Joint_now['Velocity_limit_'+current_type_joint['current_joint_type']];  
+                         Joint_now['Veolocity_limit'] = joint_velocity_statement; 
+                         console.log("Joint limit data",Joint_now); 
+                  }       
+                  /*  // name_PCj   name of the current joint data 
+                  {
+                        "Joint_name": "HY1",
+                        "Joint_type": "revolute",
+                        "Parent_node": "Body_1",
+                        "Child_node": "Body_1"
+                   } 
+                  */  
+                  /* axis_in_joint_limit
+                       {
+                         "x_axis": 0,
+                         "y_axis": 0,
+                         "z_axis": -1
+                        }
+                  */
+                  /* Joint_now
+                   {
+                      "limit_upper_revolute": 3.14,
+                      "limit_lower_revolute": -3.14,
+                      "Effort_limit_revolute": 2700,
+                      "Veolocity_limit": 0
+                   }
+                  */
+                  //Get joint type 
+                  //Joint now header 
+                  lim_header_joint = Object.keys(Joint_now)
+                   
+                  joint_name = name_PCj['Joint_name'] 
+                  joint_types = name_PCj['Joint_type']
+                  parent_nodes = name_PCj['Parent_node']
+                  child_nodes = name_PCj['Child_node']
+                  //Get the current data 
+                  limit_lower_joint = Joint_now[lim_header_joint[0]]
+                  limit_upper_joint = Joint_now[lim_header_joint[1]]
+                  Effort_limit = Joint_now[lim_header_joint[2]] 
+                  Velocity_limit = Joint_now[lim_header_joint[3]] 
+
+                  //Extract the origin data of the current child joint name 
+                  joint_origin = urdf_data[child_nodes]['visual']['origin']
+                  joint_total[joint_name] = {'name':joint_name,'type':joint_types,'origin':joint_origin,'parent':parent_nodes,'child':child_nodes,'axis':{'xyz':[axis_in_joint_limit.x_axis,axis_in_joint_limit.y_axis,axis_in_joint_limit.z_axis],'limit':{'lower':limit_lower_joint,'upper':limit_upper_joint,'effort':Effort_limit,'velocity':Velocity_limit}}}    
+                  joint_urdf['joint'] = joint_total 
+                  console.log(joint_urdf);   //Get the urdf data joint  
+                  if(current_type_joint == {}){
+                           alert("Please select the Joint type"); // Please select the joint type data 
+                  }          
+        },
+        Remove_project:function(){
+                console.log("fetch removing project") 
+                //Fetch removing the current project to remove file 
+                // POST
+                fetch('/remove_project', {
+                         // Declare what type of data we're sending
+                      headers: {
+                          'Content-Type': 'application/json'
+                      },
+                     // Specify the method
+                     method: 'POST',
+                     // A JSON payload
+                     body: JSON.stringify({
+                                  "email": String(email_data),'project_name':project_name,'project_dir':document.getElementById('proj_dir').value
+                     })
+                     }).then(function (response) { // At this point, Flask has printed our JSON
+                     return response.text();
+                     }).then(function (text) {
+                     console.log('POST response: ');
+                          // Should be 'OK' if everything was successful
+                          Current_dir = JSON.parse(text); 
+                          console.log(Current_dir); //Get the current directory data
+                          email = Object.keys(Current_dir)[0]
+                          project_dir = Current_dir[email]
+                          alert("Successfully remove project part directory ",project_dir); 
+                          //window.location.reload() // Reload forward
+                          window.history.back() //Back the link previously
+                          //window.location.reload()
+                          window.open('http://192.168.50.201:5890/create_urdf/'+account_payload, '_self');
+
+              });
+        },
+        reload_project:function()
+        {
+                console.log("Refleshing project list")             
+                window.history.back() //Back the link previously
+                //window.location.reload()
+                window.open('http://192.168.50.201:5890/create_urdf/'+account_payload, '_self');
+                      
+        },
+        generate_urdf: function(){
+                 console.log("Generating the urdf to the back end data side") // Processing the back-end data 
+                 get_componame = document.getElementById("component_name").value;    
+                 if(get_componame == ''){
+                    alert("Please type your component link name")
+                 }
+                 if(get_componame !=''){
+                       console.log(urdf_parts);
+                       console.log(package_urdf); //Get the package urdf to send the link and joint data to the back end server 
+                       alert('Generating URDF in progress.....') // Generate the urdf file at the back-end generation 
+                       //console.log(package_urdf); //get the package urdf send back into the back-end to fetch the urdf generator    
+                       //Fetch the data to the back end code 
+                       // POST
+                       fetch('/generate_urdf_converter', {
+                            // Declare what type of data we're sending
+                            headers: {
+                              'Content-Type': 'application/json'
+                           },
+                           // Specify the method
+                           method: 'POST',
+                           // A JSON payload
+                           body: JSON.stringify(package_urdf)
+                          }).then(function (response) { // At this point, Flask has printed our JSON
+                          return response.text();
+                          }).then(function (text) {
+                          console.log('POST response: ');
+                                // Should be 'OK' if everything was successful
+                                response = JSON.parse(text); 
+                                console.log(response);  
+                          });
+
+                 }
+                  
+        }, 
+        upload_model: function() 
+        {  
+               // Activate the modal popup upload the model into the server 
+               console.log("Activate modal upload function"); 
+               var modal_2 = document.getElementById("myModal");
+               modal_2.style.display="block"; 
+               var span_2 = document.getElementsByClassName("close");
+               span_2.onclick = function() {
+                       modal_2.style.display = "none";
+                       
+               }    
+               // When the user clicks anywhere outside of the modal, close it
+               window.onclick = function(event) {
+               if (event.target == modal_2) {
+                      modal_2.style.display = "none";
+                      
+               }      
+               } 
+              
+        }      
+      };
+      var compo_text = component_dat();
+      var position_dat = document.querySelector("#position_data"); // Sending the data to the object detection 
+      var gui = new dat.GUI({autoPlace: true}); //{autoPlace: true}
+      //gui.domElement = 'gui';
+      document.querySelector("body").appendChild(gui.domElement);
+      gui.domElement.style.position = "fixed";
+      gui.domElement.id = 'gui'
+
+      //gui.domElement.style.left = "0";
+      //gui.domElement.style.top = "0";
+     
+      gui.add(settings, 'project_name').onChange(function (value) {
+                             
+      }); 
+      
+      gui.add(settings, 'compo_name').onChange(function(values){
+            
+                console.log("component_name",values);
+                document.getElementById("component_name").value = values; 
+                   
+                
+      });
+      
+      var Link = gui.addFolder('Link');
+      var collision_data = Link.addFolder('Collision_geometry'); //Choose the collision data to add the physics parameter into the urdf file
+
+      var Inertial = Link.addFolder("Inertial");
+       
+      Inertial.add(settings,'mass',0.0,9000.0).step(0.0001).onChange(function(values_mass){
+                console.log("Mass_data",values_mass,typeof(values_mass)); 
+                document.getElementById('mass').value = values_mass;
+
+      })
+      //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      // Origin inertial values input from the slider and number input data 
+      var Origin_inertial = Inertial.addFolder("Origin_inertial"); 
+      var int_origin_x = Origin_inertial.add(settings,'inertial_origin_x',0.0,100.0).step(0.0001).onChange(function(values_ix){
+               console.log("Inertial_origin_x",values_ix,typeof(values_ix));     
+               inertial_origin_xyz['ix'] = values_ix;
+               console.log(inertial_origin_xyz);
+      });  
+      var inertil_origin_y = Origin_inertial.add(settings,'inertial_origin_y',0.0,100.0).step(0.001).onChange(function(values_iy){
+               console.log("Inertial_origin_y",values_iy,typeof(values_iy)); 
+               inertial_origin_xyz['iy'] = values_iy;
+               console.log(inertial_origin_xyz);  
+      });
+      var inertial_origin_z = Origin_inertial.add(settings,'inertial_origin_z',0.0,100.0).step(0.001).onChange(function(values_iz){
+                console.log("Inertial_origin_z",values_iz,typeof(values_iz)); 
+                inertial_origin_xyz['iz'] = values_iz;
+                console.log(inertial_origin_xyz);   
+      })
+      //Inertial origin rpy 
+      var inertial_rows = Origin_inertial.add(settings,'inertial_row',-3.14,3.14).step(0.001).onChange(function(values_row){
+                  console.log("Values_rows:",values_row);
+                  rpy_inertial_link['row'] = values_row;
+                  console.log(rpy_inertial_link); 
+      });
+      var inertial_pitch = Origin_inertial.add(settings,'inertial_pitch',-3.14,3.14).step(0.001).onChange(function(values_pitch){
+                  console.log("Values_pitch",values_pitch);
+                  rpy_inertial_link['pitch'] = values_pitch; 
+                  console.log(rpy_inertial_link); 
+      });
+      var inertial_yaw = Origin_inertial.add(settings,'inertial_yaw',-3.14,3.14).step(0.001).onChange(function(values_yaw){
+                  console.log("Values_yaw",values_yaw); 
+                  rpy_inertial_link['yaw'] = values_yaw; 
+                  console.log(rpy_inertial_link); 
+      });
+      //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      list_inertial = ['ixx','ixy','ixz','iyy','iyz','izz']       
+      Inertial.add(settings,'ixx',0.0,9000.0).step(0.0001).onChange(function(values_ixx){
+                console.log("inertial_ixx",values_ixx,typeof(values_ixx)); //Ad the parameter   
+                //document.getElementById("ixx_dat").value = String(values_ixx); 
+                inertia_data['ixx_dat'] = values_ixx;
+      }) 
+      Inertial.add(settings,'ixy',0.0,9000.0).step(0.0001).onChange(function(values_ixy){
+                console.log("inertial_ixy",values_ixy,typeof(values_ixy)); //Ad the parameter   
+                //document.getElementById("ixy_dat").value = String(values_ixy);
+                inertia_data['ixy_dat'] = values_ixy;
+      })    
+      Inertial.add(settings,'ixz',0.0,9000.0).step(0.0001).onChange(function(values_ixz){
+                console.log("inertial_ixz",values_ixz,typeof(values_ixz)); //Ad the parameter   
+                //document.getElementById("ixz_dat").value = String(values_ixz);
+                inertia_data['ixz_dat'] = values_ixz;
+      }) 
+      Inertial.add(settings,'iyy',0.0,9000.0).step(0.0001).onChange(function(values_iyy){
+                console.log("inertial_iyy",values_iyy,typeof(values_iyy)); //Ad the parameter
+                //document.getElementById("iyy_dat").value = String(values_iyy);   
+                inertia_data['iyy_dat'] = values_iyy;
+      })   
+      Inertial.add(settings,'iyz',0.0,9000.0).step(0.0001).onChange(function(values_iyz){
+                console.log("inertial_iyz",values_iyz,typeof(values_iyz)); //Ad the parameter 
+                //document.getElementById("iyz_dat").value = String(values_iyz);  
+                inertia_data['iyz_dat'] = values_iyz;
+      })  
+      Inertial.add(settings,'izz',0.0,9000.0).step(0.0001).onChange(function(values_izz){
+                console.log("inertial_izz",values_izz,typeof(values_izz)); //Ad the parameter
+                //document.getElementById("izz_dat").value = String(values_izz);    
+                inertia_data['izz_dat'] = values_izz;
+      })  
+      var Joint = gui.addFolder("Joint");
+      //Run this joint after 
+      Joint.add(settings, 'Joint_parent_and_child');
+      
+      
+      console.log("Root of inertial",Inertial.getRoot());
+      var f0 = gui.addFolder('Transform_Node');
+      
+      /*
+      f0.onClick(function() {
+              // Code to execute when folder is clicked
+              if(existing_stl ==[]){
+                   alert("This will be show up when selected the mesh model")
+              }
+      });
+      */
+      var f1 = gui.addFolder('Upload_project_model'); 
+      f1.add(settings, 'upload_model'); 
+      //f1.close();
+      //fetch data after upload to activate the list collector of the file from the back-end
+      
+      //gui.add(settings, 'select_model', [ 'Option 1', 'Option 2', 'Option 3' ] );
+      //Fetch the model list from the back end data 
+      //model_list_file = ['Ankle1.stl','Body.stl'];
+      //Total robot parts 
+      fetch('/robot_parts', {
+                        // Declare what type of data we're sending
+                        headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // Specify the method
+                    method: 'POST',
+                    // A JSON payload  Sending the email account and component selected
+                    body: JSON.stringify({
+                        "email": String(email_data),"project_name":project_name         
+                    })
+
+                    //
+             }).then(function (response) { // At this point, Flask has printed our JSON
+           return response.text();
+        }).then(function (text) {
+      console.log('POST response: ');
+           // Should be 'OK' if everything was successful
+           //console.log(JSON.parse(text)); // Getting the json parse data of the current file 
+           file_data = JSON.parse(text);
+           console.log(file_data);
+           email_profile = Object.keys(file_data)[0] // Getting the emails data of the file 
+           project_profile = Object.values(file_data)[0] 
+           project_name_id = Object.keys(project_profile)[0]
+           console.log(email_profile);
+           console.log(project_profile);
+           console.log(project_name_id);
+           // list the inner directory inside the total project 
+           total_model_list = file_data[email_profile][project_name_id]; 
+           //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+           //Fetch each user data in project list 
+           fetch('/Account_user_parts', {
+
+                   // Declare what type of data we're sending
+                   headers: {
+                        'Content-Type': 'application/json'
+                   },
+                  // Specify the method
+                   method: 'POST',
+                   // A JSON payload
+                   body: JSON.stringify({
+                         "email": String(email_data)
+                   })
+                   }).then(function (response) { // At this point, Flask has printed our JSON
+                   return response.text();
+                  }).then(function (text) {
+                    console.log('POST response: ');
+
+                       // Should be 'OK' if everything was successful
+                      console.log(text);
+           file_dir = JSON.parse(text); 
+           console.log(file_dir);
+          
+           //model_list_file = file_data[email_profile][project_name_id];  // Get the model list file data from the cassified each user data collection
+           model_list_file = file_dir
+           model_list_file.unshift('Non-select');
+           var f11 = gui.add(settings,'select_model',model_list_file).name("Project_list");
+           f11.setValue("Non-select") 
+           f11.onChange(function(value){
+           var models_stl= model_stl_dat.style.settings = value;
+           console.log(models_stl); //Getting the data of the model slected from the list  
+           document.getElementById('proj_dir').value = models_stl; 
+           //model_name = models_stl.split(".")[0];
+           //console.log(model_name,models_stl); 
+           //get the files of the model from here 
+           fetch('/robot_file_name', {
+                                // Declare what type of data we're sending
+                                headers: {
+                                     'Content-Type': 'application/json' 
+                                },
+                            // Specify the method
+                            method: 'POST',
+                           // A JSON payload
+                           body: JSON.stringify({'email':String(email_data),'project_name':project_name,'project_dir':models_stl}) 
+                          }).then(function (response) { // At this point, Flask has printed our JSON
+                          return response.text();
+                          }).then(function (text) {
+                          console.log('POST response: ');
+                            // Should be 'OK' if everything was successful
+                            //console.log(text);
+                            inner_files_data = JSON.parse(text); //Get the inner files data of the robot components 
+                            console.log("Robot_parts",inner_files_data);
+                            email_id = inner_files_data['email']
+                            projects_id_data = inner_files_data[project_name]
+                            inner_model_file = projects_id_data[models_stl]['project_files'] 
+                            console.log('Email data',email_id);
+                            console.log('project_name_data',projects_id_data)
+                            console.log('Project_files_name',inner_model_file) 
+                            if(inner_model_file[0].split(".")[1] == 'stl'){
+                                        TDmodel(inner_model_file,models_stl) // Get the 3d files visulization 
+                                        fetch('/robot_file_name', {
+                                // Declare what type of data we're sending
+                                headers: {
+                                     'Content-Type': 'application/json' 
+                                },
+                            // Specify the method
+                            method: 'POST',
+                           // A JSON payload
+                           body: JSON.stringify({'email':String(email_data),'project_name':project_name,'project_dir':models_stl}) 
+                          }).then(function (response) { // At this point, Flask has printed our JSON
+                          return response.text();
+                          }).then(function (text) {
+                          console.log('POST response: ');
+                            // Should be 'OK' if everything was successful
+                            //console.log(text);
+                            inner_files_data = JSON.parse(text); //Get the inner files data of the robot components 
+                            console.log("Robot_parts",inner_files_data);
+                            email_id = inner_files_data['email']
+                            projects_id_data = inner_files_data[project_name]
+                            inner_model_file = projects_id_data[models_stl]['project_files'] 
+                            console.log('Email data',email_id);
+                            console.log('project_name_data',projects_id_data)
+                            console.log('Project_files_name',inner_model_file) 
+                            if(inner_model_file[0].split(".")[1] == 'stl'){
+                                   console.log("Create new file selectbox",inner_model_file);     
+                                   inner_model_file.unshift('Non-select');
+                                   var f11C = collision_data.add(settings,'Mesh_name',inner_model_file).name("Mesh_name");
+                                   f11C.setValue("Non-select")
+                                   f11C.onChange(function(values_model){
+                                          console.log("Selected_model",values_model);
+                                          document.getElementById('geometry').value = values_model;
+                                   }); 
+                                   //var reload = gui.add(settings,'reload_project').name("Project_reload") 
+
+                                  /*
+                                   f11C.onChange(function(value){
+                                    
+                                   //TDmodel(inner_model_file) // Get the 3d files visulization 
+                                  }
+                                  */
+                          }
+                           
+                       }); 
+                            }
+                            if(inner_model_file[0].split(".")[1] != 'stl'){
+                                    alert("You need to use stl file only and not STL or other file extension")
+                            }
+                       });  
+                      //End of the line fetching the user data 
+                    });                       
+                   
+        }); 
+      //var reload = gui.add(settings,'reload_project').name("Project_reload")  
+      gui.addColor(settings, 'color').onChange(function (values) {
+        console.log("Hex_color_code:",values,"rgba:",hexToRgba(values));
+        document.getElementById("colors_data").value = hexToRgba(values); // Get the color of the rgba for the URDF model 
+        document.getElementById("color_hex").value = values; //get the hex value color data 
+      });
+      gui.add(settings, 'model_properties'); // Add model color from the selected list to send the current model to display new selected color 
+      var f2 = gui.addFolder('Generate_URDF'); // Generate the URDF file from the existing data configure from this template  
+      f2.add(settings, 'generate_urdf'); // generate the urdf file to the directory at the back end of the data   
+      //f2.close();    
+      });
+      var remove_project = gui.addFolder("Remove_project")
+      remove_project.add(settings,'Remove_project'); 
+      /*
+      var Scene_setting = gui.addFolder("Scene settings")
+      Scene_setting.add(settings, 'grid_set').onChange(function (value) {
+              console.log('grid_settings',value); 
+              ground.material.isVisible = value;
+      });
+      */  
+      //model_list_file = ['Thigh6.stl', 'Thigh3.stl', 'Shin2.stl', 'Foot6.stl', 'Shin5.stl', 'Thigh1.stl', 'Hip1.stl', 'Ankle6.stl', 'Ankle3.stl', 'Foot5.stl', 'Ankle4.stl', 'Knee5.stl', 'Foot1.stl', 'Knee3.stl', 'Thigh2.stl', 'Knee1.stl', 'Thigh5.stl', 'Body.stl', 'Shin1.stl', 'Foot2.stl', 'Foot4.stl', 'Shin4.stl', 'Knee6.stl', 'Knee2.stl', 'Hip5.stl', 'Hip4.stl', 'Ankle1.stl', 'Knee4.stl', 'Thigh4.stl', 'Foot3.stl', 'Shin6.stl', 'Ankle5.stl', 'Shin3.stl', 'Hip3.stl', 'Hip6.stl', 'Ankle2.stl', 'Hip2.stl'];
+      
+      //model_list_file = ['Catbot3+pure+body.stl']
+      
+       // End of fetching data via fetch post request 
+     
+function hexToRgba(hex) {
+  // Use the parseInt function to convert the hex string to a number
+  let hexNum = parseInt(hex.slice(1), 16);
+
+  // Use bitwise shifting and bitwise AND to separate the red, green, and blue components of the hex number
+  let r = (hexNum >> 16) & 255;
+  let g = (hexNum >> 8) & 255;
+  let b = hexNum & 255;
+
+  // Use the rgba function to create the rgba string
+  let rgba = `${r} ${g} ${b} 1`;
+  return rgba; // Change the color of the current model 
+}
+function hexToPureRgb(hex){
+  let hexNum = parseInt(hex.slice(1), 16);
+  // Use bitwise shifting and bitwise AND to separate the red, green, and blue components of the hex number
+  let r = (hexNum >> 16) & 255;
+  let g = (hexNum >> 8) & 255; 
+  let b = hexNum & 255;
+  // Use the rgba function to create the rgba string
+  let rgb = `${r/255},${g/255},${b/255}`;
+  return rgb;
+}
+function Materials_color(hex_color,proj_dir,geometry){
+    var bar = BABYLON.SceneLoader.Append("../static/urdf/"+proj_dir+"/meshes/",geometry, scene, () => {
+    var material = new BABYLON.StandardMaterial(scene);
+    material.alpha = 1;
+    color_dat = hexToPureRgb(hex_color).split(",")
+    material.diffuseColor = new BABYLON.Color3(color_dat[0],color_dat[1],color_dat[2]);
+    material.alpha = 0.8;
+
+    const mesh = scene.getMeshByName("stlmesh");
+    mesh.material = material;
+  });
+}
+function Colorized_model(email_profile,projectnames,projdir,partnames,urdf_parts,color_hex){
+        fetch('/model_color', {
+               // Declare what type of data we're sending
+        headers: {
+               'Content-Type': 'application/json'
+        }, 
+        // Specify the method 
+        method: 'POST',
+       // A JSON payload
+       body: JSON.stringify({
+          "email": email_profile,"project_name":projectnames,"project_directory":projdir,"partname":partnames,"structure_parts":urdf_parts,"colorhex":color_hex
+      })
+      }).then(function (response) { // At this point, Flask has printed our JSON
+      return response.text();
+      }).then(function (text) {
+          console.log('POST response: ');
+          // Should be 'OK' if everything was successful
+              data_redirect = JSON.parse(text); 
+              console.log(data_redirect); 
+              email_datas = data_redirect['email'] // get the email output data 
+              part_names = data_redirect['partname'] 
+              project_names = data_redirect['project_name']
+              structure_code = data_redirect['structure_parts'] //Get the structure code of the parts link and the materials data to visualize inside the model properties
+              colorhexs = data_redirect['colorhex'].split("#")[1]
+              console.log(email_datas);
+              console.log(part_names);
+              console.log(project_names);
+              console.log(colorhexs);
+              window.open("http://192.168.50.201:5890/model_colors/"+btoa(text), '_blank').blur();
+              
+              
+       });
+}
+function TDmodel(model_list_file,models_stl){
+        var canvas = document.getElementById("renderCanvas");
+        var startRenderLoop = function (engine, canvas) {
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        }
+
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        var createScene = function () {
+            var scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color3(0.8,0.8,0.8);
+
+            //Adding a light
+            var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(20, 20, 100), scene);
+            var ground = BABYLON.Mesh.CreateGround("ground", 100, 100, 2, scene);
+            var groundMaterial = new BABYLON.GridMaterial("groundMaterial", scene);
+            ground.material = groundMaterial;
+            //Adding an Arc Rotate Camera
+            var camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI/2, 1.4, 500, BABYLON.Vector3.Zero(), scene);
+          
+            camera.attachControl(scene.getEngine().getRenderingCanvas()); 
+            /*
+            camera.minX = 0.01;
+            camera.maxX = 0.01;
+            camera.minZ = 0.1;
+            camera.maxZ = 10000;
+            camera.lowerRadiusLimit = 0.000001;
+            camera.upperRadiusLimit = 180;
+            */
+            camera.attachControl(canvas, false);
+            camera.setTarget(new BABYLON.Vector3(0, 0, 0));
+        
+            // The first parameter can be used to specify which mesh to import. Here we import all meshes
+            //The mesh will be import from the selectbox
+            //models_name = models_stl.split(".")[0] 
+            // using eval to running the clone software running 
+
+              //BABYLON.SceneLoader.ImportMesh('body', "static/","Body.stl" , scene, function (newMeshes) {
+             var r = 0; 
+             model_list_file.shift();
+             console.log(model_list_file);
+             for(r>=0; r<=model_list_file.length-1;r++){
+                //BABYLON.SceneLoader.ImportMeshAsync(model_list_file[r].split(".")[0],"/static/",model_list_file[r],scene).then((newMeshes)=> {      
+                
+                if(model_list_file[r] != 'Non-select'){  // /urdf/T12/meshes/
+                  console.log("Classify model",model_list_file[r])
+                  BABYLON.SceneLoader.ImportMesh(String(model_list_file[r]),"../static/urdf/"+models_stl+"/meshes/",String(model_list_file[r]) , scene, function (newMeshes) {
+                
+                eval("var mesh_"+String(model_list_file[r])+" = newMeshes[0];")
+                //eval("var pmesh_"+String(model_list_file[r])+" = mesh_"+String(model_list_file[r])+".parent;"); // Gettiing the mesh model parent 
+                //eval("console.log('pmesh_'"+String(model_list_file[r])+");");
+                eval("mesh_"+String(model_list_file[r])+".isPickable = true;"); //Gettig the mesh model pickable function                 eval("console.log(mesh_"+String(model_list_file[r])+");") // Display mesh data 
+                eval("mesh_data_id['"+String(model_list_file[r])+"'] = mesh_"+String(model_list_file[r]));
+                eval("console.log(mesh_"+String(model_list_file[r])+".name);");
+                
+                newMeshes[0].wireframe = true;
+                //eval("for (let i = 0; i < newMeshes"+".length; i++) { newMeshes[i].name = 'mesh' + i;}");
+                eval("mesh_"+String(model_list_file[r])+".showBoundingBox = true;");
+                eval("mesh_"+String(model_list_file[r])+".position = BABYLON.Vector3.Zero();");    
+              
+                eval("var oldPos_"+String(model_list_file[r])+"= mesh_"+String(model_list_file[r])+".position.clone();");
+                eval("var oldPivotTranslation_"+String(model_list_file[r])+" = mesh_"+String(model_list_file[r])+".getPivotMatrix().getTranslation();");
+                eval("mesh_"+String(model_list_file[r])+".position.set(-oldPivotTranslation_"+String(model_list_file[r])+".x, -oldPivotTranslation_"+String(model_list_file[r])+".y, -oldPivotTranslation_"+String(model_list_file[r])+".z);")        
+                eval("var PosAfterSet_"+String(model_list_file[r])+" = mesh_"+String(model_list_file[r])+".position.clone();");
+                eval("mesh_"+String(model_list_file[r])+".setPivotMatrix(BABYLON.Matrix.Translation(0, 1, 0), false);");
+                eval("var newPivotTranslation_"+String(model_list_file[r])+" = mesh_"+String(model_list_file[r])+".getPivotMatrix().getTranslation();")
+               
+                eval("mesh_"+String(model_list_file[r])+".bakeCurrentTransformIntoVertices();");
+                eval("var PosAfterBCTIV_"+String(model_list_file[r])+" = mesh_"+String(model_list_file[r])+".position.clone();")
+        
+                // mesh.position.copyFrom(oldPos);
+        
+                eval("var PosAfterCF_"+String(model_list_file[r])+"= mesh_"+String(model_list_file[r])+".position.clone();");
+                eval("console.log('PosAfterCF"+String(model_list_file[r])+"->'+PosAfterCF_"+String(model_list_file[r])+");");
+        
+                var gizmoManager = new BABYLON.GizmoManager(scene);
+                //inicializar todos los gizos    
+                gizmoManager.positionGizmoEnabled = true;
+                gizmoManager.boundingBoxGizmoEnabled = gizmoManager.rotationGizmoEnabled = gizmoManager.scaleGizmoEnabled = false;
+                eval("gizmoManager.attachToMesh(mesh_"+String(model_list_file[r])+");");
+                
+                scene.onPointerDown = function (evt, pickResult, pickInfo){
+                // We try to pick an object
+                if (pickResult.hit) {
+                    //header.textContent = pickResult.pickedMesh.name;
+                    //camera.focusOn([pickInfo.pickedMesh], true);
+                    
+                    console.log("Mesh name data",pickResult.pickedMesh.name);  //Get the picked mesh name 
+                    for (let i = 0; i < newMeshes.length; i++){ console.log("Link meshes data",newMeshes[i].name);};
+                    get_componame = document.getElementById("component_name").value;    
+                    console.log("Mesh pickable position",pickResult.pickedMesh.position._x,pickResult.pickedMesh.position._y,pickResult.pickedMesh.position._z);
+                    console.log("Mesh_pickable_rotation",pickResult.pickedMesh.rotation._x,pickResult.pickedMesh.rotation._y,pickResult.pickedMesh.rotation._z);
+                    console.log("Component_name:",get_componame);
+                    console.log("Project_name",project_name) //Getting the project 
+                    console.log("Gometry_mesh_collision",document.getElementById('geometry').value); //Get the data from the geometry input   
+                    console.log("Colors_data",document.getElementById('colors_data').value); // Get the value of the color for the URDF model  
+                    console.log("Mass_data",document.getElementById('mass').value);
+                                        
+                    //console.log("Inertial_data",document.getElementById('ixy_dat').value,document.getElementById('ixz_dat').value,document.getElementById('iyy_dat').value,document.getElementById('izz_dat').value); 
+                    
+                    if(get_componame != ''){
+                  
+                                         
+                    //check if link or joint in the dictionary data before adding into the list 
+                    //Check link true/false 
+                    //check joint true/false
+                    console.log(String(document.getElementById('geometry').value).split(".").length);
+                    console.log(String(document.getElementById('geometry').value).split(".")[1]);
+                    console.log("Check if the geometry exist in list",existing_stl); 
+                    console.log(String(document.getElementById('geometry').value) in existing_stl);
+                    // Keep as dictionary  
+                    if (existing_stl.includes(document.getElementById('geometry').value) == false){   
+                                if(document.getElementById('geometry').value != ''){   
+                                existing_stl.push(String(document.getElementById('geometry').value)); 
+                                if(pickResult.pickedMesh.name != 'ground'){   
+                                     //Default value statement in the case non of them selected this will be replacing by the default values 
+
+                                     color_state_ment = document.getElementById('colors_data').value == ""  ? hexToRgba(settings['color']) : document.getElementById('colors_data').value 
+                                     //Inertial pos 
+                                     var inertial_xp_statement = inertial_origin_xyz.ix == undefined ? 0:inertial_origin_xyz.ix;   // Add 0 as default value of the non select data as undefined default 
+                                     var inertial_yp_statement = inertial_origin_xyz.iy == undefined ? 0:inertial_origin_xyz.iy; 
+                                     var inertial_zp_statement = inertial_origin_xyz.iz == undefined ? 0:inertial_origin_xyz.iz;   
+                                     //Inertial rot 
+                                     var rpy_inertial_xr = rpy_inertial_link.row == undefined ? 0:rpy_inertial_link.row;   
+                                     var rpy_inertial_yp = rpy_inertial_link.pitch == undefined ? 0: rpy_inertial_link.pitch; 
+                                     var rpy_inertial_zy = rpy_inertial_link.yaw == undefined ? 0: rpy_inertial_link.yaw; 
+
+                                     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                                     //Generated value data 
+                                     urdf_data[get_componame] = {'inertial':{'origin':{'xyz':{'x':inertial_xp_statement,'y':inertial_yp_statement,'z':inertial_zp_statement},
+                                    "rpy":{"r":rpy_inertial_xr,"p":rpy_inertial_yp,"y":rpy_inertial_zy}},
+                                    'mass':{'value':parseFloat(document.getElementById('mass').value)},'inertia':inertia_data},
+                                    
+                                    'collision':{'geometry':{'mesh':{'filename':"../meshes/"+document.getElementById('geometry').value}},
+                                    //All in origin are define
+                                    'origin':{'xyz':{'x':pickResult.pickedMesh.position._x,'y':pickResult.pickedMesh.position._y,'z':pickResult.pickedMesh.position._z},
+                                    'rpy':{'r':pickResult.pickedMesh.rotation._x,'p':pickResult.pickedMesh.rotation._y,'y':pickResult.pickedMesh.rotation._z}}},
+                                    // All in visual are define 
+                                    'visual':{'origin':{'xyz':{'x':pickResult.pickedMesh.position._x,'y':pickResult.pickedMesh.position._y,'z':pickResult.pickedMesh.position._z},
+                                    'rpy':{'r':pickResult.pickedMesh.rotation._x,'p':pickResult.pickedMesh.rotation._y,'y':pickResult.pickedMesh.rotation._z}}, 
+                                    'color':{'rgba':color_state_ment},
+                                    'geometry':{'mesh':{'file_name':"../meshes/"+document.getElementById('geometry').value}}}}      
+                                    urdf_parts[project_name] = urdf_data; // Getting the urdf parts data to contain new data inside 
+                                    //Change the email below into the email data
+                                    //project_package[settings['project_name']] = urdf_data
+                                    link_joint_urdf['link'] = urdf_data
+                                    link_joint_urdf['joint'] = joint_total
+                                    directory_proj[document.getElementById('proj_dir').value] = link_joint_urdf
+                                    urdf_parts[project_name] = directory_proj
+                                    package_urdf[email_data] = urdf_parts  // Generate the urdf package data of user profile 
+                                    //Materials_color(document.getElementById('color_hex').value,models_stl,document.getElementById('geometry').value)
+                                    
+                                
+                              }
+                                if(pickResult.pickedMesh.name == 'ground'){
+                                     console.log("ground is not mesh "); //Ground is not the mesh it's part of the scene 
+                                     alert("Ground is not mesh it's part of the scene");  
+                              } 
+                          }
+                           if(document.getElementById('geometry').value == ''){
+                                      alert("Please select your geometry mesh model in collision geometry contain in the link folder");
+                           }
+                    }
+                      if(existing_stl.includes(document.getElementById('geometry').value) == true){
+                                   console.log("Current_selected geometry for link");
+                                   alert("Please select new geometry mesh for new link")
+
+                      }
+
+                    
+                    
+                      //end of the fetch data
+                    // Add the position and rotation with the name input from dat.gui.js
+                    // Check if the name is already exist then add it into the folder and get the name from the component name 
+                    // Get the components name data to set the parameters of the logic statement    
+                    if(get_componame in urdf_parts == false){
+                       gizmoManager.positionGizmoEnabled = false;
+                       gizmoManager.rotationGizmoEnabled = false;
+                       gizmoManager.scaleGizmoEnabled = false;
+                       gizmoManager.boundingBoxGizmoEnabled = false;
+                        
+                       if(Object.keys(urdf_data).includes(Object.keys(urdf_data)[0]) == true){ 
+                       
+                        
+                       //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                       var f01 = f0.addFolder("Gizmo_control");  //get_componame             
+                       f01.add(settings, 'position').onChange(function (value) {
+                        console.log('position',value);  
+                        gizmoManager.positionGizmoEnabled = value;    
+                       });  
+                       f01.add(settings, 'rotation').onChange(function (value) {
+                          console.log('rotation',value); 
+                          gizmoManager.rotationGizmoEnabled = value;
+                      });  
+                      f01.add(settings, 'scale').onChange(function (value){
+                          console.log('scale',value);
+                          gizmoManager.scaleGizmoEnabled = value; 
+
+                      })
+                      f01.add(settings, 'bounding').onChange(function (value){
+                          console.log('bounding',value);
+                          gizmoManager.boundingBoxGizmoEnabled = value; 
+
+                      })
+                      
+                      
+
+                    }
+                    
+                    }
+                  
+                  }
+                
+                
+                    if(document.getElementById("component_name").value != ''){
+                               alert("Please delete the current part name before pick another one.")                                         
+                    }  
+                  
+                  
+                }
+                   // gizmo management
+            
+            };
+            //document.getElementById("component_name").value ="Axis_control";
+                document.onkeydown = (e)=>{
+                    if (e.key == 'p' || e.key == 'e' || e.key == 'r' || e.key == 'q'){
+                        gizmoManager.positionGizmoEnabled = false;
+                        gizmoManager.rotationGizmoEnabled = false;
+                        gizmoManager.scaleGizmoEnabled = false;
+                        gizmoManager.boundingBoxGizmoEnabled = false;
+                        
+                        if(e.key == 'p'){
+                          if(document.getElementById("component_name").value == ''){
+                            gizmoManager.positionGizmoEnabled = true;
+                          } 
+                        }
+                        if(e.key == 'e'){
+                          if(document.getElementById("component_name").value == ''){
+                            gizmoManager.rotationGizmoEnabled = true;
+                          }
+                        }
+                        if (e.key == 'r'){
+                          if(document.getElementById("component_name").value == ''){
+                            gizmoManager.scaleGizmoEnabled = true;
+                          }                      
+                        }
+                        if(e.key == 'q'){
+                          if(document.getElementById("component_name").value == ''){
+                            gizmoManager.boundingBoxGizmoEnabled = true;
+                          }  
+                        }
+                    }
+                    if(e.key == 'w'){
+                      if(document.getElementById("component_name").value == ''){
+                            gizmoManager.attachToMesh(null);
+                      } 
+                    }
+        
+                    if(e.key == 'a'){
+                    gizmoManager.gizmos.positionGizmo.updateGizmoRotationToMatchAttachedMesh = !gizmoManager.gizmos.positionGizmo.updateGizmoRotationToMatchAttachedMesh;
+                    gizmoManager.gizmos.rotationGizmo.updateGizmoRotationToMatchAttachedMesh = !gizmoManager.gizmos.rotationGizmo.updateGizmoRotationToMatchAttachedMesh;
+        
+                    }
+        
+                    if(e.key == 's'){
+                        if (gizmoManager.gizmos.scaleGizmo.snapDistance == 0){
+                            gizmoManager.gizmos.scaleGizmo.snapDistance = 0.3;
+                            gizmoManager.gizmos.rotationGizmo.snapDistance = 0.3;
+                            gizmoManager.gizmos.positionGizmo.snapDistance = 0.3;
+                        }else{
+                            gizmoManager.gizmos.scaleGizmo.snapDistance = 0;
+                            gizmoManager.gizmos.rotationGizmo.snapDistance = 0;
+                            gizmoManager.gizmos.positionGizmo.snapDistance = 0 ;
+                            } 
+                        }
+                    }
+               
+        
+            });
+          }
+        }
+        
+            scene.onBeforeRenderObservable.add(function(){
+                light.position = camera.position;
+            });
+         
+         
+        
+            return scene;
+        }
+
+                window.initFunction = async function() {
+                    
+                    
+                    var asyncEngineCreation = async function() {
+                        try {
+                        return createDefaultEngine();
+                        } catch(e) {
+                        console.log("the available createEngine function failed. Creating the default engine instead");
+                        return createDefaultEngine();
+                        }
+                    }
+
+                    window.engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        startRenderLoop(engine, canvas);
+        window.scene = createScene();};
+        initFunction().then(() => {sceneToRender = scene                    
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });  
+  }
+
+        
     </script>
-    <div id="my-gui-container"></div>   <!---Get the position control for the dat.gui.js--> 
+    <!--Upload funtion to upload data from the website to the server in ip file to upload stl file-->
+    <script>
+        function uploadfile(evt, cityName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(cityName).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
+    
+    
+    </script>    
 </body>
+
 
 </html>

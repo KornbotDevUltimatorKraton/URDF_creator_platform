@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>model_properties</title>
+        <input type="hidden" id="data_redirects" value="{{data_direct}}">  <!--value={{color_hex}} of the current model send from the web open link data-->   
+        <!-- Babylon.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://assets.babylonjs.com/generated/Assets.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        data_direct= document.getElementById('data_redirects').value;
+        data_redirect = JSON.parse(atob(data_direct)); //decode the data 
+        email_datas = data_redirect['email'] // get the email output data 
+        part_names = data_redirect['partname'] 
+        project_names = data_redirect['project_name']
+        project_directory = data_redirect['project_directory']
+        structurecode = data_redirect['structure_parts']
+        colorhexs = data_redirect['colorhex'].split("#")[1]
+        console.log(email_datas);
+        console.log(part_names);
+        console.log(project_names);
+        console.log(colorhexs);
+        console.log(project_directory);
+        console.log(structurecode);   //Get the structure code 
+        
+        var canvas = document.getElementById("renderCanvas");
+
+        var startRenderLoop = function (engine, canvas) {
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        }
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        var createScene = function () {
+  // This creates a basic Babylon Scene object (non-mesh)
+  var scene = new BABYLON.Scene(engine);
+  scene.clearColor = new BABYLON.Color3(0.8,0.8,0.8);
+  // This creates and positions a free camera (non-mesh)
+  var camera = new BABYLON.ArcRotateCamera("camera", BABYLON.Tools.ToRadians(90), BABYLON.Tools.ToRadians(90), 100, new BABYLON.Vector3(0, 1, 0), scene)
+  camera.attachControl(scene.getEngine().getRenderingCanvas());
+  camera.zoomToMouseLocation = true;
+  camera.wheelDeltaPercentage = 0.05;  
+    // Enable mouse wheel inputs.
+  camera.inputs.addMouseWheel(); 
+  // This attaches the camera to the canvas
+  camera.attachControl(canvas, true);
+
+  // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
+  var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(10, 10, 10), scene);
+
+  // Default intensity is 1. Let's dim the light a small amount
+  light.intensity = 0.7;
+  var ground = BABYLON.Mesh.CreateGround("ground", 100, 100, 2, scene);
+  var groundMaterial = new BABYLON.GridMaterial("groundMaterial", scene);
+  ground.material = groundMaterial;
+  // Create the grid material
+  /*
+  var groundMaterial = new BABYLON.GridMaterial("groundMaterial", scene);
+	groundMaterial.majorUnitFrequency = 5;
+	groundMaterial.minorUnitVisibility = 0.45;
+	groundMaterial.gridRatio = 2;
+	groundMaterial.backFaceCulling = false;
+	groundMaterial.mainColor = new BABYLON.Color3(1, 1, 1);
+	groundMaterial.lineColor = new BABYLON.Color3(1.0, 1.0, 1.0);
+	groundMaterial.opacity = 0.98;
+
+	var ground = BABYLON.Mesh.CreateGroundFromHeightMap("ground", "textures/heightMap.png", 100, 100, 100, 0, 10, scene, false);
+	ground.material = groundMaterial;
+	var ground = BABYLON.Mesh.CreateGroundFromHeightMap("ground", "../static/textures/Brass_steal.jpeg", 100, 100, 100, 0, 10, scene, false);
+	ground.material = groundMaterial;
+  */ 
+// Create a ground
+  //var ground = BABYLON.Mesh.CreateGround("ground", 100, 100, 2, scene);
+  // Create the grid material
+  //var gridMaterial = new BABYLON.GridMaterial("gridMaterial", scene);
+  // Create the plane mesh
+  //var plane = BABYLON.MeshBuilder.CreatePlane("plane", {width: 100, height: 100}, scene);
+
+  // Apply the grid material to the plane
+  //plane.material = gridMaterial;
+  // Position and scale the plane
+  //plane.position.y = 0.1;
+  //plane.scaling.y = 0.1;
+  //plane.scaling.x = 0.1;
+  // Add the plane to the scene
+  //scene.addMesh(plane);
+
+  var bar = BABYLON.SceneLoader.Append("../static/urdf/"+project_directory+"/meshes/",part_names, scene, () => {
+    var material = new BABYLON.StandardMaterial(scene);
+    //material.alpha = 1;
+    color_dat = hexToPureRgb("#"+colorhexs).split(",")
+    material.diffuseColor = new BABYLON.Color3(color_dat[0],color_dat[1],color_dat[2]);
+    //material.alpha = 0.8; //Change the materials opacity property 
+    // Change the texture of the model property 
+    //material.diffuseTexture = new BABYLON.Texture("../static/textures/Brass_steal.jpeg", scene);
+    //material.bumpTexture = new BABYLON.Texture("../static/textures/Brass_steal.jpeg", scene);
+    //material.diffuseTexture.uScale = 1.0;
+
+    const mesh = scene.getMeshByName("stlmesh");
+    mesh.material = material;
+  });
+  
+  return scene;
+};
+                window.initFunction = async function() {
+                    
+                    
+                    var asyncEngineCreation = async function() {
+                        try {
+                        return createDefaultEngine();
+                        } catch(e) {
+                        console.log("the available createEngine function failed. Creating the default engine instead");
+                        return createDefaultEngine();
+                        }
+                    }
+
+                    window.engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        startRenderLoop(engine, canvas);
+        window.scene = createScene();};
+        initFunction().then(() => {sceneToRender = scene                    
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+function hexToPureRgb(hex){
+  let hexNum = parseInt(hex.slice(1), 16);
+  // Use bitwise shifting and bitwise AND to separate the red, green, and blue components of the hex number
+  let r = (hexNum >> 16) & 255;
+  let g = (hexNum >> 8) & 255; 
+  let b = hexNum & 255;
+  // Use the rgba function to create the rgba string
+  let rgb = `${r/255},${g/255},${b/255}`;
+  return rgb;
+}
+//console.log(hexToPureRgb('#106e52'))
+</script>
+</body>
+</html>
