@@ -7,10 +7,12 @@ from xml.dom import minidom
 mem_child_joint = {} # mem the child in joint position 
 # Load the json and running the loop structure of the data from the json front-end to generate the back-end URDF inside the project directory file 
 #Get this data from the fetcher in front-end command request 
-data_partss = open("Joint_link_create_1_leg.json",'r') 
+#project_name_dir = "Joint_link_create_1_leg.json" # Get the project name dir data 
+project_name_dir = "joint_fixed_test_2.json"
+data_partss = open(project_name_dir,'r') #Get the total project name  
 data_com = json.loads(data_partss.read()) # Get the json data parts load the json function into 
 #Get the project name data of the model urdf
-email = list(data_com)[0]
+email = list(data_com)[0]   # Get the raw email data from the list
 project_name = list(data_com.get(email))[0]
 project_dir = list(data_com.get(email).get(project_name))[0]
 # Get the 
@@ -31,7 +33,7 @@ def joint_function(jointnames,joint_type,jointorigin_xyz,jointorigin_rpy,jointpa
        joint_name = ET.SubElement(robot, "joint")  
        joint_name.set('name',jointnames)
        joint_name.set('type',joint_type)
-       joint_origin = ET.SubElement(joint_name,'oringin') 
+       joint_origin = ET.SubElement(joint_name,'origin') 
        joint_origin.set('xyz',jointorigin_xyz)
        joint_origin.set('rpy',jointorigin_rpy)
        joint_parent = ET.SubElement(joint_name,'parent')
@@ -207,7 +209,8 @@ tree = ET.ElementTree(robot)
 # Write the XML to a file
 xml_str = ET.tostring(robot)
 reparsed = minidom.parseString(xml_str)
-with open("first_generate.URDF", "w") as f:
+#Generate the urdf file data into the list 
+with open(project_name_dir.split(".")[0]+".URDF", "w") as f:  
     f.write(reparsed.toprettyxml(indent="  "))
 
 
